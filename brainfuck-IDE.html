@@ -1,0 +1,166 @@
+
+<script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
+<style>
+#tape
+{
+	display:block;
+	white-space:nowrap;
+	width:800px;
+	overflow:auto;
+}
+#tape li
+{
+	display: list-item;
+	list-style-type: none;
+	border: 1px solid #aeaeae;
+	float: left;
+	width: 30px;
+	height: 23px;
+	text-align: center;
+	padding-top: 5px;
+	margin-right: 2px;
+	color: gray;
+}
+#codes{
+	width: 815px;
+	height: 600px;
+	line-height: 1.3;
+	background-color: #5b5b5b;
+	border: 3px solid #3e3e3e;
+	resize: vertical;
+	outline: none;
+	font-size: 20px;
+	color: #fff;
+	font-family: monospace;
+	padding: 10px;
+	white-space: pre;
+	display: block;
+	overflow: scroll;
+	word-wrap: normal;
+}
+
+#preview {
+	width: 815px;
+	height: 600px;
+	line-height: 1.3;
+	background-color: #5b5b5b;
+	border: 3px solid #3e3e3e;
+	resize: vertical;
+	outline: none;
+	font-size: 20px;
+	color: #fff;
+	font-family: monospace;
+	padding: 10px;
+	white-space: pre;
+	display: block;
+	overflow: scroll;
+	word-wrap: normal;
+}
+.caret {
+	border-radius: 4px;
+	background-color: #fff;
+	color: #000;
+}
+</style>
+memory:<div id="tape"><ul><li></div>
+terminal:
+<input id="console" type="text" /><br />
+debug:<input type="checkbox" id="debug" /><br />
+<button id="run"  onclick="javascript:window.run();"				style="width:80px">run</button><br />
+<button id="step" onclick="javascript:window.step();"	 disabled 	style="width:80px">step</button><br />
+
+<div id="preview" style="display: none;"></div>
+<textarea id="codes" style="display: block;">
++++++ +++++             # initialize counter (cell #0) to 10
+[                       # use loop to set 70/100/30/10
+    > +++++ ++          #     add  7 to cell #1
+    > +++++ +++++       #     add 10 to cell #2
+    > +++               #     add  3 to cell #3
+    > +                 #     add  1 to cell #4
+<<<< -                    # decrement counter (cell #0)
+]                         # 
+> ++ .                  # print 'H'
+> + .                   # print 'e'
++++++ ++ .              # print 'l'
+.                       # print 'l'
++++ .                   # print 'o'
+> ++ .                  # print ' '
+<< +++++ +++++ +++++ .    # print 'W'
+> .                     # print 'o'
++++ .                   # print 'r'
+----- - .               # print 'l'
+----- --- .             # print 'd'
+> + .                   # print '!'
+</textarea>
+<script>
+/**
+  * # an brainfuck IDE by liaisonme@hotmail.com
+ *
+ * @author      zhangxx<20437023@qq.com>
+ * @version     1.0
+ * @since       1.0
+ * Date         19-08-15
+ * Time         01:34
+ */
+var mem=[0,0,0,0,0,0,0,0,0,0,0,0];
+function execute(codes){
+	let ops=codes.split("");
+	let ptr=0,pc=0,op=function(){return ops[pc].charCodeAt();},nop=function(){};
+	let _=[];while(_.length<94){_.push(nop);}
+	_[43]=function(){mem[ptr]++;};
+	_[44]=function(){mem[ptr]=prompt().charCodeAt();};
+	_[45]=function(){mem[ptr]--;};
+	_[46]=function(){$('#console').val($('#console').val()+String.fromCharCode(mem[ptr]));};
+	_[60]=function(){ptr--;};
+	_[62]=function(){ptr++;};
+	_[91]=function(){if(0==mem[ptr])while(93!=op()){pc++;}};
+	_[93]=function(){if(0!=mem[ptr])while(91!=op()){pc--;}};
+	
+	//while(pc<ops.length){
+	//	_[op()]();
+	//	pc++;
+	//}
+	
+	
+	$('#preview').html(codes).toggle();
+	$('#codes').toggle();
+	$('#run').attr({"disabled":"disabled"});
+	if($('#debug').prop("checked"))$('#step').removeAttr("disabled");
+	
+	window.sync=function(){
+		$('#tape').html('<li>'+mem.join('</li><li>')+'</li>');
+		$(`#tape > li:nth-child(${1+ptr})`).css('background-color','yellow');
+		var incs=codes.split("");
+		incs.splice(pc,1,'<span class="caret">'+incs[pc]+'</span>');
+		$('#preview').html(incs.join(""));
+	}
+	window.step=function (){
+		window.sync();
+		
+		
+		
+		if(pc<ops.length){
+			var inc=op();
+			_[inc]();
+			pc++;
+			if(!$('#debug').prop("checked"))setTimeout(step,10);
+		}else{
+			$('#preview').html(codes).toggle();
+			$('#codes').toggle();
+			$('#run').removeAttr("disabled");
+			$('#step').attr({"disabled":"disabled"});
+		}
+	}
+	window.step();
+}
+function run(){
+	var lines=$('#codes').text().split("\n");
+	for(var i=0;i<lines.length;i++){
+		lines[i]=lines[i].substring(0,lines[i].indexOf('#')).trimEnd();
+	}
+	execute(lines.join("\n"));
+}
+$(function(){
+	$('#tape').html('<li>'+mem.join('</li><li>')+'</li>');
+});
+</script>
